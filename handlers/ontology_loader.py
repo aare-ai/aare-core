@@ -1,6 +1,6 @@
 """
 Ontology loader for aare.ai (Self-hosted version)
-Loads verification rules from local filesystem or returns defaults
+Loads verification rules from local filesystem or returns example default
 """
 import json
 import os
@@ -28,248 +28,121 @@ class OntologyLoader:
         except Exception as e:
             logging.warning(f"Failed to load ontology from {ontology_file}: {e}")
 
-        # Check for built-in ontologies
-        builtin = self._get_builtin_ontology(ontology_name)
-        if builtin:
-            return builtin
-
-        # Fall back to default
-        logging.info(f"Using default ontology for {ontology_name}")
-        return self._get_default_ontology()
+        # Fall back to example ontology
+        logging.info(f"Using example ontology for {ontology_name}")
+        return self._get_example_ontology()
 
     def _validate_ontology(self, ontology):
         """Validate ontology structure"""
-        required_fields = ["name", "version", "constraints", "extractors"]
+        required_fields = ["name", "version", "constraints"]
         for field in required_fields:
             if field not in ontology:
                 raise ValueError(f"Invalid ontology: missing {field}")
+
+        # Validate each constraint has a formula field
+        for constraint in ontology.get("constraints", []):
+            if "formula" not in constraint:
+                raise ValueError(
+                    f"Invalid ontology: constraint {constraint.get('id', 'unknown')} missing 'formula' field"
+                )
+
         return ontology
 
-    def _get_builtin_ontology(self, name):
-        """Get built-in ontology by name"""
-        builtins = {
-            "mortgage-compliance-v1": self._get_default_ontology(),
-            "fair-lending-v1": self._get_fair_lending_ontology(),
-            "hipaa-v1": self._get_hipaa_ontology(),
-        }
-        return builtins.get(name)
+    def _get_example_ontology(self):
+        """
+        Return example ontology demonstrating the framework.
 
-    def _get_default_ontology(self):
-        """Return default mortgage compliance ontology"""
+        This is a generic example showing how to define constraints.
+        For production use, create your own ontology JSON files in the ontologies/ directory.
+        """
         return {
-            "name": "mortgage-compliance-v1",
+            "name": "example",
             "version": "1.0.0",
-            "description": "U.S. Mortgage Compliance - Core constraints",
+            "description": "Example ontology demonstrating constraint syntax",
             "constraints": [
                 {
-                    "id": "ATR_QM_DTI",
-                    "category": "ATR/QM",
-                    "description": "Debt-to-income ratio requirements",
-                    "formula_readable": "(dti ≤ 43) ∨ (compensating_factors ≥ 2)",
-                    "variables": [
-                        {"name": "dti", "type": "real"},
-                        {"name": "compensating_factors", "type": "int"},
-                    ],
-                    "error_message": "DTI exceeds 43% without sufficient compensating factors",
-                    "citation": "12 CFR § 1026.43(c)",
+                    "id": "MAX_VALUE",
+                    "category": "Limits",
+                    "description": "Value must not exceed maximum",
+                    "formula_readable": "value ≤ 100",
+                    "formula": {"<=": ["value", 100]},
+                    "variables": [{"name": "value", "type": "real"}],
+                    "error_message": "Value exceeds maximum allowed (100)",
+                    "citation": "Example Policy",
                 },
                 {
-                    "id": "HOEPA_HIGH_COST",
-                    "category": "HOEPA",
-                    "description": "High-cost mortgage counseling requirement",
-                    "formula_readable": "(fee_percentage < 8) ∨ counseling_disclosed",
-                    "variables": [
-                        {"name": "fee_percentage", "type": "real"},
-                        {"name": "counseling_disclosed", "type": "bool"},
-                    ],
-                    "error_message": "HOEPA triggered - counseling disclosure required",
-                    "citation": "12 CFR § 1026.32",
+                    "id": "MIN_VALUE",
+                    "category": "Limits",
+                    "description": "Value must meet minimum threshold",
+                    "formula_readable": "value ≥ 0",
+                    "formula": {">=": ["value", 0]},
+                    "variables": [{"name": "value", "type": "real"}],
+                    "error_message": "Value below minimum threshold (0)",
+                    "citation": "Example Policy",
                 },
                 {
-                    "id": "UDAAP_NO_GUARANTEES",
-                    "category": "UDAAP",
-                    "description": "Prohibition on guarantee language",
-                    "formula_readable": "¬(has_guarantee ∧ has_approval)",
-                    "variables": [
-                        {"name": "has_guarantee", "type": "bool"},
-                        {"name": "has_approval", "type": "bool"},
-                    ],
-                    "error_message": "Cannot guarantee approval",
-                    "citation": "12 CFR § 1036.3",
+                    "id": "NO_PROHIBITED_FLAG",
+                    "category": "Compliance",
+                    "description": "Prohibited flag must not be set",
+                    "formula_readable": "¬prohibited",
+                    "formula": {"==": ["prohibited", False]},
+                    "variables": [{"name": "prohibited", "type": "bool"}],
+                    "error_message": "Prohibited action detected",
+                    "citation": "Example Policy",
                 },
                 {
-                    "id": "HPML_ESCROW",
-                    "category": "Escrow",
-                    "description": "Escrow requirements based on FICO",
-                    "formula_readable": "(credit_score ≥ 620) ∨ ¬escrow_waived",
+                    "id": "CONDITIONAL_REQUIREMENT",
+                    "category": "Logic",
+                    "description": "If condition A, then condition B must be true",
+                    "formula_readable": "condition_a → condition_b",
+                    "formula": {
+                        "implies": [
+                            {"==": ["condition_a", True]},
+                            {"==": ["condition_b", True]},
+                        ]
+                    },
                     "variables": [
-                        {"name": "credit_score", "type": "int"},
-                        {"name": "escrow_waived", "type": "bool"},
+                        {"name": "condition_a", "type": "bool"},
+                        {"name": "condition_b", "type": "bool"},
                     ],
-                    "error_message": "Cannot waive escrow with FICO < 620",
-                    "citation": "12 CFR § 1026.35(b)",
+                    "error_message": "Condition B required when Condition A is true",
+                    "citation": "Example Policy",
                 },
                 {
-                    "id": "REG_B_ADVERSE",
-                    "category": "Regulation B",
-                    "description": "Adverse action disclosure requirements",
-                    "formula_readable": "is_denial → has_specific_reason",
+                    "id": "EITHER_OR_REQUIREMENT",
+                    "category": "Logic",
+                    "description": "At least one option must be selected",
+                    "formula_readable": "option_a ∨ option_b",
+                    "formula": {
+                        "or": [
+                            {"==": ["option_a", True]},
+                            {"==": ["option_b", True]},
+                        ]
+                    },
                     "variables": [
-                        {"name": "is_denial", "type": "bool"},
-                        {"name": "has_specific_reason", "type": "bool"},
+                        {"name": "option_a", "type": "bool"},
+                        {"name": "option_b", "type": "bool"},
                     ],
-                    "error_message": "Must disclose specific denial reason",
-                    "citation": "12 CFR § 1002.9",
+                    "error_message": "At least one option must be selected",
+                    "citation": "Example Policy",
                 },
             ],
             "extractors": {
-                "dti": {"type": "float", "pattern": "dti[:\\s~]*(\\d+(?:\\.\\d+)?)"},
-                "credit_score": {
-                    "type": "int",
-                    "pattern": "(?:fico|credit score)[:\\s]*(\\d{3})",
-                },
-                "fees": {
-                    "type": "money",
-                    "pattern": "\\$?([\\d,]+)k?\\s*(?:fees?|costs?)",
-                },
-                "loan_amount": {
-                    "type": "money",
-                    "pattern": "\\$?([\\d,]+)k?\\s*(?:loan|mortgage)",
-                },
-                "has_guarantee": {
+                "value": {"type": "float", "pattern": "value[:\\s]*(\\d+(?:\\.\\d+)?)"},
+                "prohibited": {
                     "type": "boolean",
-                    "keywords": ["guaranteed", "100%", "definitely"],
+                    "keywords": ["prohibited", "forbidden", "banned"],
                 },
-                "has_approval": {"type": "boolean", "keywords": ["approved", "approve"]},
-                "counseling_disclosed": {
-                    "type": "boolean",
-                    "keywords": ["counseling"],
-                },
-                "escrow_waived": {
-                    "type": "boolean",
-                    "keywords": ["escrow waived", "waive escrow", "skip escrow"],
-                },
-                "is_denial": {
-                    "type": "boolean",
-                    "keywords": ["denied", "cannot approve"],
-                },
-                "has_specific_reason": {
-                    "type": "boolean",
-                    "keywords": ["credit", "income", "dti", "debt", "score"],
-                },
-            },
-        }
-
-    def _get_fair_lending_ontology(self):
-        """Return fair lending ontology"""
-        return {
-            "name": "fair-lending-v1",
-            "version": "1.0.0",
-            "description": "Fair Lending Compliance",
-            "constraints": [
-                {
-                    "id": "LOAN_AMOUNT_LIMIT",
-                    "category": "Fair Lending",
-                    "description": "Loan amount within policy limits",
-                    "formula_readable": "loan_amount ≤ 100000",
-                    "variables": [{"name": "loan_amount", "type": "int"}],
-                    "error_message": "Loan amount exceeds policy limit",
-                    "citation": "Internal Policy",
-                },
-                {
-                    "id": "MAX_DTI",
-                    "category": "Fair Lending",
-                    "description": "Maximum DTI ratio",
-                    "formula_readable": "dti ≤ 43",
-                    "variables": [{"name": "dti", "type": "real"}],
-                    "error_message": "DTI exceeds maximum",
-                    "citation": "12 CFR § 1026.43",
-                },
-                {
-                    "id": "MIN_CREDIT_SCORE",
-                    "category": "Fair Lending",
-                    "description": "Minimum credit score requirement",
-                    "formula_readable": "credit_score ≥ 600",
-                    "variables": [{"name": "credit_score", "type": "int"}],
-                    "error_message": "Credit score below minimum",
-                    "citation": "Internal Policy",
-                },
-            ],
-            "extractors": {
-                "loan_amount": {
-                    "type": "money",
-                    "pattern": "\\$?([\\d,]+)k?\\s*(?:loan|mortgage)",
-                },
-                "dti": {"type": "float", "pattern": "dti[:\\s~]*(\\d+(?:\\.\\d+)?)"},
-                "credit_score": {
-                    "type": "int",
-                    "pattern": "(?:fico|credit score)[:\\s]*(\\d{3})",
-                },
-            },
-        }
-
-    def _get_hipaa_ontology(self):
-        """Return HIPAA compliance ontology"""
-        return {
-            "name": "hipaa-v1",
-            "version": "1.0.0",
-            "description": "HIPAA PHI Protection",
-            "constraints": [
-                {
-                    "id": "PHI_SSN_ZERO_TOLERANCE",
-                    "category": "PHI Detection",
-                    "description": "No SSN disclosure",
-                    "formula_readable": "¬has_ssn",
-                    "variables": [{"name": "has_ssn", "type": "bool"}],
-                    "error_message": "SSN detected in output",
-                    "citation": "45 CFR § 164.514",
-                },
-                {
-                    "id": "PHI_NAME_DISCLOSURE",
-                    "category": "PHI Detection",
-                    "description": "Patient name requires authorization",
-                    "formula_readable": "¬has_patient_name ∨ recipient_authorized",
-                    "variables": [
-                        {"name": "has_patient_name", "type": "bool"},
-                        {"name": "recipient_authorized", "type": "bool"},
-                    ],
-                    "error_message": "Patient name disclosed without authorization",
-                    "citation": "45 CFR § 164.502",
-                },
-                {
-                    "id": "PHI_ADDRESS_DISCLOSURE",
-                    "category": "PHI Detection",
-                    "description": "No street address disclosure",
-                    "formula_readable": "¬has_street_address",
-                    "variables": [{"name": "has_street_address", "type": "bool"}],
-                    "error_message": "Street address detected in output",
-                    "citation": "45 CFR § 164.514",
-                },
-            ],
-            "extractors": {
-                "has_ssn": {
-                    "type": "boolean",
-                    "keywords": [],
-                    "pattern": "\\d{3}-\\d{2}-\\d{4}",
-                },
-                "has_patient_name": {
-                    "type": "boolean",
-                    "keywords": ["patient:", "name:"],
-                },
-                "has_street_address": {
-                    "type": "boolean",
-                    "keywords": ["street", "avenue", "blvd", "road", "lane"],
-                },
-                "recipient_authorized": {
-                    "type": "boolean",
-                    "keywords": ["authorized", "consent"],
-                },
+                "condition_a": {"type": "boolean", "keywords": ["condition a", "case a"]},
+                "condition_b": {"type": "boolean", "keywords": ["condition b", "case b"]},
+                "option_a": {"type": "boolean", "keywords": ["option a", "choice a"]},
+                "option_b": {"type": "boolean", "keywords": ["option b", "choice b"]},
             },
         }
 
     def list_available(self):
         """List all available ontologies"""
-        ontologies = set(["mortgage-compliance-v1", "fair-lending-v1", "hipaa-v1"])
+        ontologies = set(["example"])
 
         # Add any from the ontology directory
         if self.ontology_dir.exists():

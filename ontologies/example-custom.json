@@ -8,6 +8,7 @@
       "category": "Pricing",
       "description": "Maximum discount percentage allowed",
       "formula_readable": "discount_percentage ≤ 25",
+      "formula": {"<=": ["discount_percentage", 25]},
       "variables": [
         {"name": "discount_percentage", "type": "real"}
       ],
@@ -19,6 +20,7 @@
       "category": "Brand",
       "description": "Cannot mention competitor names",
       "formula_readable": "¬mentions_competitor",
+      "formula": {"==": ["mentions_competitor", false]},
       "variables": [
         {"name": "mentions_competitor", "type": "bool"}
       ],
@@ -30,6 +32,7 @@
       "category": "Quality",
       "description": "Response must be substantive",
       "formula_readable": "word_count ≥ 10",
+      "formula": {">=": ["word_count", 10]},
       "variables": [
         {"name": "word_count", "type": "int"}
       ],

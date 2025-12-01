@@ -1,6 +1,14 @@
-# aare.ai - Self-Hosted Verification Engine
+# aare.ai - Z3 SMT Verification Framework
 
-Self-hosted deployment of the aare.ai Z3 SMT verification engine. Run your own instance with Docker or directly on any server.
+Pure framework for verifying LLM outputs using Z3 SMT solver with JSON-defined constraints. This is the core library - for production ontologies and cloud deployments, see the cloud-specific repositories.
+
+## Overview
+
+aare.ai uses formal verification (Z3 SMT solver) to validate LLM outputs against structured constraints. The key innovation is the **Formula Compiler** - constraints are defined entirely in JSON, with no code changes needed.
+
+```
+JSON Formula → Formula Compiler → Z3 Expression → Formal Verification
+```
 
 ## Quick Start
 
@@ -48,18 +56,63 @@ gunicorn --bind 0.0.0.0:8080 app:app
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     aare.ai (Self-Hosted)                        │
+│                     aare.ai Framework                            │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │                    /verify endpoint                      │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌────────────────────┐     │   │
 │  │  │   LLM    │→ │ Ontology │→ │   Z3 SMT Verifier  │     │   │
-│  │  │  Parser  │  │  Loader  │  │  (Constraint Logic)│     │   │
+│  │  │  Parser  │  │  Loader  │  │  + Formula Compiler│     │   │
 │  │  └──────────┘  └──────────┘  └────────────────────┘     │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                              ↓                                  │
 │                    Local Filesystem                             │
 │                   (./ontologies/*.json)                         │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+## Formula Compiler
+
+The formula compiler translates JSON constraint definitions into Z3 expressions. This enables:
+
+- **No code changes** to add new constraints
+- **Domain-agnostic** - works for any verification domain
+- **Formally verified** - mathematically provable correctness
+
+### Supported Operators
+
+| Category | Operators |
+|----------|-----------|
+| **Logical** | `and`, `or`, `not`, `implies` |
+| **Comparison** | `==`, `!=`, `<`, `<=`, `>`, `>=` |
+| **Arithmetic** | `+`, `-`, `*`, `/` |
+| **Constants** | `true`, `false`, numeric values |
+
+### Formula Examples
+
+```json
+// Simple comparison: value ≤ 100
+{"<=": ["value", 100]}
+
+// Negation: ¬prohibited
+{"==": ["prohibited", false]}
+
+// Implication: condition_a → condition_b
+{"implies": [
+  {"==": ["condition_a", true]},
+  {"==": ["condition_b", true]}
+]}
+
+// Disjunction: option_a ∨ option_b
+{"or": [
+  {"==": ["option_a", true]},
+  {"==": ["option_b", true]}
+]}
+
+// Complex: (dti ≤ 43) ∨ (compensating_factors ≥ 2)
+{"or": [
+  {"<=": ["dti", 43]},
+  {">=": ["compensating_factors", 2]}
+]}
 ```
 
 ## API Reference
@@ -72,8 +125,8 @@ Verifies LLM output against compliance constraints.
 curl -X POST http://localhost:8080/verify \
   -H "Content-Type: application/json" \
   -d '{
-    "llm_output": "Based on your DTI of 35% and FICO score of 720, you are approved for a $350,000 mortgage.",
-    "ontology": "mortgage-compliance-v1"
+    "llm_output": "The value is 50, option A is selected.",
+    "ontology": "example"
   }'
 ```
 
@@ -83,12 +136,11 @@ curl -X POST http://localhost:8080/verify \
   "verified": true,
   "violations": [],
   "parsed_data": {
-    "dti": 35,
-    "credit_score": 720,
-    "loan_amount": 350000
+    "value": 50,
+    "option_a": true
   },
   "ontology": {
-    "name": "mortgage-compliance-v1",
+    "name": "example",
     "version": "1.0.0",
     "constraints_checked": 5
   },
@@ -115,7 +167,7 @@ curl http://localhost:8080/ontologies
 Get a specific ontology definition.
 
 ```bash
-curl http://localhost:8080/ontologies/mortgage-compliance-v1
+curl http://localhost:8080/ontologies/example
 ```
 
 ### GET /health
@@ -126,17 +178,9 @@ Health check endpoint.
 curl http://localhost:8080/health
 ```
 
-## Built-in Ontologies
+## Creating Custom Ontologies
 
-| Ontology | Description |
-|----------|-------------|
-| `mortgage-compliance-v1` | U.S. mortgage lending compliance (ATR/QM, HOEPA, UDAAP, Reg B) |
-| `fair-lending-v1` | Fair lending regulations |
-| `hipaa-v1` | HIPAA PHI protection |
-
-## Custom Ontologies
-
-Create your own compliance rules by adding JSON files to the `ontologies/` directory.
+Create your own verification rules by adding JSON files to the `ontologies/` directory.
 
 ### Ontology Structure
 
@@ -147,47 +191,44 @@ Create your own compliance rules by adding JSON files to the `ontologies/` direc
   "description": "Description of your ontology",
   "constraints": [
     {
-      "id": "UNIQUE_ID",
+      "id": "UNIQUE_CONSTRAINT_ID",
       "category": "Category Name",
       "description": "What this constraint checks",
       "formula_readable": "human-readable formula",
+      "formula": {"<=": ["value", 100]},
       "variables": [
-        {"name": "variable_name", "type": "bool|int|real"}
+        {"name": "value", "type": "real"}
       ],
       "error_message": "Error shown when violated",
       "citation": "Reference to regulation/policy"
     }
   ],
   "extractors": {
-    "variable_name": {
-      "type": "boolean|int|float|money|percentage|string",
-      "keywords": ["keyword1", "keyword2"],
-      "pattern": "regex pattern for extraction"
+    "value": {
+      "type": "float",
+      "pattern": "value[:\\s]*(\\d+(?:\\.\\d+)?)"
     }
   }
 }
 ```
 
+### Variable Types
+
+| Type | Z3 Type | Use For |
+|------|---------|---------|
+| `bool` | `Bool` | True/false flags |
+| `int` | `Int` | Whole numbers |
+| `real` or `float` | `Real` | Decimal numbers |
+
 ### Extractor Types
 
 | Type | Description | Example |
 |------|-------------|---------|
-| `boolean` | True if any keyword is found | `{"keywords": ["approved", "accepted"]}` |
+| `boolean` | True if any keyword found | `{"keywords": ["approved", "accepted"]}` |
 | `int` | Extract integer from regex | `{"pattern": "score[:\\s]*(\\d+)"}` |
 | `float` | Extract decimal number | `{"pattern": "(\\d+\\.\\d+)%"}` |
 | `money` | Extract currency (handles k/m/b) | `{"pattern": "\\$([\\d,]+)k?"}` |
 | `percentage` | Extract percentage | `{"pattern": "(\\d+(?:\\.\\d+)?)%"}` |
-
-### Constraint Formulas
-
-The `formula_readable` field is for documentation. The actual logic is implemented in `smt_verifier.py`. Supported patterns:
-
-- `x ≤ value` - Less than or equal
-- `x ≥ value` - Greater than or equal
-- `¬x` - Negation (NOT)
-- `x ∧ y` - Conjunction (AND)
-- `x ∨ y` - Disjunction (OR)
-- `x → y` - Implication (IF...THEN)
 
 ## Configuration
 
@@ -290,7 +331,7 @@ spec:
 ```python
 import requests
 
-def verify_llm_output(llm_response: str, ontology: str = "mortgage-compliance-v1") -> dict:
+def verify_llm_output(llm_response: str, ontology: str = "example") -> dict:
     """Verify LLM output before returning to user"""
     result = requests.post(
         "http://localhost:8080/verify",
@@ -316,12 +357,24 @@ if verification["verified"]:
 
 ## Cloud Deployments
 
-For managed cloud deployments, see our cloud-specific repositories:
+For managed cloud deployments with production ontologies, see our cloud-specific repositories:
 
-- [aare-aws](https://github.com/aare-ai/aare-aws) - AWS Lambda
-- [aare-azure](https://github.com/aare-ai/aare-azure) - Azure Functions
-- [aare-gcp](https://github.com/aare-ai/aare-gcp) - Google Cloud Functions
-- [aare-watsonx](https://github.com/aare-ai/aare-watsonx) - IBM Cloud Code Engine
+| Repository | Platform | Includes |
+|------------|----------|----------|
+| [aare-aws](https://github.com/aare-ai/aare-aws) | AWS Lambda | Mortgage, HIPAA, Fair Lending ontologies |
+| [aare-azure](https://github.com/aare-ai/aare-azure) | Azure Functions | Coming soon |
+| [aare-gcp](https://github.com/aare-ai/aare-gcp) | Google Cloud Functions | Coming soon |
+| [aare-watsonx](https://github.com/aare-ai/aare-watsonx) | IBM Cloud Code Engine | Coming soon |
+
+## Running Tests
+
+```bash
+# Install test dependencies
+pip install pytest z3-solver
+
+# Run all tests
+pytest tests/ -v
+```
 
 ## License
 
