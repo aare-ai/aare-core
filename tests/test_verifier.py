@@ -2,15 +2,7 @@
 Tests for aare.ai verification engine
 """
 import pytest
-import sys
-import os
-
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from handlers.llm_parser import LLMParser
-from handlers.smt_verifier import SMTVerifier
-from handlers.ontology_loader import OntologyLoader
+from aare_core import LLMParser, SMTVerifier, OntologyLoader
 
 
 @pytest.fixture

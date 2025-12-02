@@ -119,7 +119,7 @@ class OntologyLoader:
                     "id": "MAX_VALUE",
                     "category": "Limits",
                     "description": "Value must not exceed maximum",
-                    "formula_readable": "value ≤ 100",
+                    "formula_readable": "value <= 100",
                     "formula": {"<=": ["value", 100]},
                     "variables": [{"name": "value", "type": "real"}],
                     "error_message": "Value exceeds maximum allowed (100)",
@@ -129,7 +129,7 @@ class OntologyLoader:
                     "id": "MIN_VALUE",
                     "category": "Limits",
                     "description": "Value must meet minimum threshold",
-                    "formula_readable": "value ≥ 0",
+                    "formula_readable": "value >= 0",
                     "formula": {">=": ["value", 0]},
                     "variables": [{"name": "value", "type": "real"}],
                     "error_message": "Value below minimum threshold (0)",
@@ -139,7 +139,7 @@ class OntologyLoader:
                     "id": "NO_PROHIBITED_FLAG",
                     "category": "Compliance",
                     "description": "Prohibited flag must not be set",
-                    "formula_readable": "¬prohibited",
+                    "formula_readable": "!prohibited",
                     "formula": {"==": ["prohibited", False]},
                     "variables": [{"name": "prohibited", "type": "bool"}],
                     "error_message": "Prohibited action detected",
@@ -149,7 +149,7 @@ class OntologyLoader:
                     "id": "CONDITIONAL_REQUIREMENT",
                     "category": "Logic",
                     "description": "If condition A, then condition B must be true",
-                    "formula_readable": "condition_a → condition_b",
+                    "formula_readable": "condition_a -> condition_b",
                     "formula": {
                         "implies": [
                             {"==": ["condition_a", True]},
@@ -167,7 +167,7 @@ class OntologyLoader:
                     "id": "EITHER_OR_REQUIREMENT",
                     "category": "Logic",
                     "description": "At least one option must be selected",
-                    "formula_readable": "option_a ∨ option_b",
+                    "formula_readable": "option_a || option_b",
                     "formula": {
                         "or": [
                             {"==": ["option_a", True]},

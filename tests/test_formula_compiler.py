@@ -3,14 +3,8 @@ Tests for Formula Compiler
 """
 
 import pytest
-import sys
-import os
-
-# Add handlers to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from z3 import Bool, Int, Real, And, Or, Not, Implies, sat, unsat, Solver
-from handlers.formula_compiler import FormulaCompiler
+from aare_core import FormulaCompiler
 
 
 class TestFormulaCompiler:

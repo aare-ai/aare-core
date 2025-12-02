@@ -17,17 +17,17 @@ class LLMParser:
         extracted = {}
         text_lower = text.lower()
         extractors = ontology.get('extractors', {})
-        
+
         for field_name, extractor in extractors.items():
             value = self._extract_field(text, text_lower, extractor)
             if value is not None:
                 extracted[field_name] = value
-        
+
         # Calculate derived fields
         extracted = self._calculate_derived_fields(extracted, text_lower)
-        
+
         return extracted
-    
+
     def _extract_field(self, text, text_lower, extractor):
         """Extract a single field based on extractor configuration"""
         extractor_type = extractor.get('type')
@@ -60,7 +60,7 @@ class LLMParser:
                     return True
 
             return False
-        
+
         elif extractor_type in ['int', 'float', 'money', 'percentage']:
             # Use regex pattern
             pattern = extractor.get('pattern')
@@ -86,7 +86,7 @@ class LLMParser:
                 match = compiled.search(text_lower)
                 if match:
                     return match.group(1) if match.groups() else match.group(0)
-        
+
         return None
 
     def _get_compiled_pattern(self, pattern: str) -> Optional[Pattern]:
@@ -105,16 +105,16 @@ class LLMParser:
     def _parse_numeric(self, match, original_text, value_type):
         """Parse numeric values from regex match"""
         value_str = match.group(1).replace(',', '')
-        
+
         if value_type == 'int':
             return int(value_str)
-        
+
         elif value_type == 'float':
             return float(value_str)
-        
+
         elif value_type == 'percentage':
             return float(value_str)
-        
+
         elif value_type == 'money':
             # Check for k/m/b suffixes
             match_text = original_text[match.start():match.end()].lower()
@@ -125,11 +125,11 @@ class LLMParser:
                 multiplier = 1000000
             elif 'b' in match_text:
                 multiplier = 1000000000
-            
+
             return float(value_str) * multiplier
-        
+
         return None
-    
+
     def _calculate_derived_fields(self, extracted, text_lower):
         """Calculate fields that depend on other fields"""
         # Fee percentage

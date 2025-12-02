@@ -21,9 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from handlers.ontology_loader import OntologyLoader
-from handlers.llm_parser import LLMParser
-from handlers.smt_verifier import SMTVerifier
+from aare_core import OntologyLoader, LLMParser, SMTVerifier
 
 app = Flask(__name__)
 
