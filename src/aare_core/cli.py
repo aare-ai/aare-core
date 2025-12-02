@@ -10,6 +10,8 @@ Usage:
 import argparse
 import json
 import sys
+import uuid
+from datetime import datetime
 
 from .ontology_loader import OntologyLoader
 from .llm_parser import LLMParser
@@ -43,9 +45,9 @@ Examples:
         help="Ontology name (bundled) or path to JSON file (default: example)"
     )
     parser.add_argument(
-        "--json", "-j",
+        "--compact", "-c",
         action="store_true",
-        help="Output full JSON result"
+        help="Output compact human-readable summary instead of JSON"
     )
     parser.add_argument(
         "--quiet", "-q",
@@ -97,16 +99,8 @@ Examples:
     if args.quiet:
         sys.exit(0 if result["verified"] else 1)
 
-    if args.json:
-        output = {
-            "verified": result["verified"],
-            "violations": result["violations"],
-            "parsed_data": extracted_data,
-            "ontology": ontology["name"],
-            "constraints_checked": len(ontology["constraints"])
-        }
-        print(json.dumps(output, indent=2))
-    else:
+    if args.compact:
+        # Compact human-readable output
         if result["verified"]:
             print(f"✓ VERIFIED - All {len(ontology['constraints'])} constraints passed")
             print(f"  Ontology: {ontology['name']} v{ontology['version']}")
@@ -118,6 +112,23 @@ Examples:
                 print(f"  [{v['constraint_id']}] {v['error_message']}")
                 if v.get("citation"):
                     print(f"    Citation: {v['citation']}")
+    else:
+        # Full JSON output (default)
+        output = {
+            "verified": result["verified"],
+            "violations": result["violations"],
+            "parsed_data": extracted_data,
+            "ontology": {
+                "name": ontology["name"],
+                "version": ontology["version"],
+                "constraints_checked": len(ontology["constraints"])
+            },
+            "proof": result["proof"],
+            "verification_id": str(uuid.uuid4()),
+            "execution_time_ms": result["execution_time_ms"],
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        print(json.dumps(output, indent=2))
 
     sys.exit(0 if result["verified"] else 1)
 

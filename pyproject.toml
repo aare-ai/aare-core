@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aare-core"
-version = "0.2.0"
+version = "0.2.1"
 description = "Z3 SMT verification engine for LLM compliance"
 readme = "README.md"
 license = {text = "MIT"}
