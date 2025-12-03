@@ -299,6 +299,8 @@ aare-verify --input "Your response" --ontology hipaa-v1
 
 Create your own verification rules by adding JSON files to the `ontologies/` directory.
 
+> **Full Documentation**: See the comprehensive [Rule Authoring Guide](docs/RULE_AUTHORING_GUIDE.md) for detailed instructions, examples, and best practices. Also available at [aare.ai/docs](https://aare.ai/docs.html).
+
 ### Ontology Structure
 
 ```json
