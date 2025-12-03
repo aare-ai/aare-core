@@ -18,6 +18,8 @@ This is the core library used by all cloud deployments:
 - [aare-gcp](https://github.com/aare-ai/aare-gcp) - Google Cloud Functions
 - [aare-watsonx](https://github.com/aare-ai/aare-watsonx) - IBM Cloud Code Engine
 
+**Documentation**: [Rule Authoring Guide](docs/RULE_AUTHORING_GUIDE.md) | [Web Docs](https://aare.ai/docs.html)
+
 ## Installation
 
 ```bash
