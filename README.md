@@ -256,6 +256,22 @@ Health check endpoint.
 curl http://localhost:8080/health
 ```
 
+### GET /verifications (requires persistence)
+
+List recent verification records.
+
+```bash
+curl http://localhost:8080/verifications?limit=50
+```
+
+### GET /verifications/{id} (requires persistence)
+
+Retrieve a specific verification record by ID.
+
+```bash
+curl http://localhost:8080/verifications/abc-123-uuid
+```
+
 ## Bundled Ontologies
 
 aare-core ships with 10 production-ready ontologies covering common compliance domains:
@@ -341,6 +357,50 @@ Create your own verification rules by adding JSON files to the `ontologies/` dir
 | `ONTOLOGY_DIR` | `./ontologies` | Directory for custom ontologies |
 | `CORS_ORIGINS` | `https://aare.ai,...` | Comma-separated allowed origins |
 | `DEBUG` | `false` | Enable debug mode |
+| `AARE_PERSISTENCE` | *(none)* | Enable audit trail persistence (see below) |
+
+### Persistence (Audit Trail)
+
+Enable optional persistence to store verification records for audit trails, compliance reporting, and historical analysis.
+
+```bash
+# SQLite (recommended for single-node deployments)
+AARE_PERSISTENCE=sqlite://verifications.db aare-serve
+
+# In-memory (testing only - data lost on restart)
+AARE_PERSISTENCE=memory aare-serve
+```
+
+When persistence is enabled:
+- Each verification is stored with a `certificate_hash` (SHA256 of verification metadata)
+- The original LLM output is hashed (not stored) for integrity verification
+- New endpoints become available: `GET /verifications` and `GET /verifications/{id}`
+- The `/health` endpoint includes `"persistence": true`
+
+**Programmatic usage:**
+
+```python
+from aare_core import SQLiteStore, InMemoryStore
+from aare_core.server import create_app
+
+# Use SQLite
+store = SQLiteStore("verifications.db")
+app = create_app(store=store)
+
+# Or create a custom backend
+from aare_core import VerificationStore, VerificationRecord
+
+class PostgresStore(VerificationStore):
+    def store(self, record: VerificationRecord) -> str:
+        # Store record, return certificate_hash
+        ...
+
+    def retrieve(self, verification_id: str) -> VerificationRecord | None:
+        # Retrieve by ID
+        ...
+
+app = create_app(store=PostgresStore(connection_string))
+```
 
 ### Docker Compose Configuration
 
@@ -354,8 +414,10 @@ services:
       - "8080:8080"
     environment:
       - CORS_ORIGINS=https://your-domain.com
+      - AARE_PERSISTENCE=sqlite:///data/verifications.db
     volumes:
       - ./ontologies:/app/ontologies:ro
+      - ./data:/data
     restart: unless-stopped
 ```
 

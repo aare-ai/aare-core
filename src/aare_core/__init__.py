@@ -7,6 +7,13 @@ from .formula_compiler import FormulaCompiler, OPERATORS
 from .llm_parser import LLMParser
 from .smt_verifier import SMTVerifier
 from .ontology_loader import OntologyLoader
+from .persistence import (
+    VerificationStore,
+    VerificationRecord,
+    SQLiteStore,
+    InMemoryStore,
+    StorageError,
+)
 
 __version__ = "0.2.1"
 
@@ -16,5 +23,11 @@ __all__ = [
     "LLMParser",
     "SMTVerifier",
     "OntologyLoader",
+    # Persistence
+    "VerificationStore",
+    "VerificationRecord",
+    "SQLiteStore",
+    "InMemoryStore",
+    "StorageError",
     "__version__",
 ]
