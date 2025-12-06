@@ -1,7 +1,3 @@
-"""
-SMT Verifier using Z3 for aare.ai
-Pure formal verification - no regex, no patterns, just math
-"""
 import logging
 import time
 from typing import Dict, List, Any
