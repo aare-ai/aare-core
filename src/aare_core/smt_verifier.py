@@ -6,7 +6,6 @@ from .formula_compiler import FormulaCompiler
 
 logger = logging.getLogger(__name__)
 
-
 class SMTVerifier:
     def __init__(self):
         self.compiler = FormulaCompiler()
