@@ -220,9 +220,9 @@ def stress_test_multi_process(num_requests: int, num_workers: int) -> StressTest
 
 
 def stress_test_hipaa(num_requests: int) -> StressTestResult:
-    """Test with large HIPAA ontology (50+ constraints)"""
+    """Test with large HIPAA ontology (76 constraints)"""
     print(f"\n{'='*60}")
-    print(f"HIPAA ONTOLOGY TEST: {num_requests} requests (50+ constraints)")
+    print(f"HIPAA ONTOLOGY TEST: {num_requests} requests (76 constraints)")
     print('='*60)
 
     loader = OntologyLoader()
@@ -327,7 +327,7 @@ def main():
     result3 = None
     if not args.skip_hipaa:
         result3 = stress_test_hipaa(args.hipaa_requests)
-        print_results(result3, "HIPAA (50+ constraints)")
+        print_results(result3, "HIPAA (76 constraints)")
 
     # Summary
     print("\n" + "="*60)
@@ -339,7 +339,7 @@ def main():
     if result2:
         print(f"{'Multi-process':<30} {result2.requests_per_second:>10,.1f} req/s    {result2.p99:>8.2f} ms")
     if result3:
-        print(f"{'HIPAA (50+ constraints)':<30} {result3.requests_per_second:>10,.1f} req/s    {result3.p99:>8.2f} ms")
+        print(f"{'HIPAA (76 constraints)':<30} {result3.requests_per_second:>10,.1f} req/s    {result3.p99:>8.2f} ms")
     print("="*60)
 
 

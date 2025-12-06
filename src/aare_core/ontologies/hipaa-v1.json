@@ -1,7 +1,7 @@
 {
   "name": "hipaa-v1",
-  "version": "1.0.0",
-  "description": "HIPAA Privacy & Security Rule compliance for healthcare AI agents - 52 constraints",
+  "version": "2.0.0",
+  "description": "Comprehensive HIPAA Privacy & Security Rule compliance for healthcare AI agents - 76 constraints including 2025 Security Rule updates, AI governance, BAA requirements, telehealth, and special protections (42 CFR Part 2, GINA)",
   "constraints": [
     {
       "id": "PHI_NAME_DISCLOSURE",
@@ -809,6 +809,478 @@
       ],
       "error_message": "Allergy information disclosed externally without authorization",
       "citation": "HIPAA §164.506"
+    },
+    {
+      "id": "AI_TRAINING_DATA_CONSENT",
+      "category": "AI Governance",
+      "description": "PHI used for AI/ML training requires explicit patient consent",
+      "formula_readable": "¬(mentions_ai_training ∧ has_phi ∧ ¬has_consent_mention)",
+      "formula": {
+        "not": {
+          "and": [
+            {"==": ["mentions_ai_training", true]},
+            {"==": ["has_phi", true]},
+            {"==": ["has_consent_mention", false]}
+          ]
+        }
+      },
+      "variables": [
+        {"name": "mentions_ai_training", "type": "bool"},
+        {"name": "has_phi", "type": "bool"},
+        {"name": "has_consent_mention", "type": "bool"}
+      ],
+      "error_message": "PHI used for AI training without documented consent",
+      "citation": "OCR AI Guidance Dec 2024"
+    },
+    {
+      "id": "AI_MODEL_BIAS_DISCLOSURE",
+      "category": "AI Governance",
+      "description": "AI-generated clinical recommendations must disclose model limitations",
+      "formula_readable": "ai_generated_recommendation → has_limitation_disclosure",
+      "formula": {
+        "implies": [
+          {"==": ["ai_generated_recommendation", true]},
+          {"==": ["has_limitation_disclosure", true]}
+        ]
+      },
+      "variables": [
+        {"name": "ai_generated_recommendation", "type": "bool"},
+        {"name": "has_limitation_disclosure", "type": "bool"}
+      ],
+      "error_message": "AI recommendation without model limitation disclosure",
+      "citation": "HHS AI Governance Framework 2024"
+    },
+    {
+      "id": "AI_HUMAN_REVIEW",
+      "category": "AI Governance",
+      "description": "AI outputs affecting treatment require qualified human review",
+      "formula_readable": "ai_clinical_decision → has_human_review_mention",
+      "formula": {
+        "implies": [
+          {"==": ["ai_clinical_decision", true]},
+          {"==": ["has_human_review_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "ai_clinical_decision", "type": "bool"},
+        {"name": "has_human_review_mention", "type": "bool"}
+      ],
+      "error_message": "AI clinical decision without human review attestation",
+      "citation": "OCR Section 1557 Guidance Dec 2024"
+    },
+    {
+      "id": "AI_ALGORITHM_TRANSPARENCY",
+      "category": "AI Governance",
+      "description": "AI-assisted decisions must reference algorithm source",
+      "formula_readable": "ai_generated_recommendation → has_algorithm_reference",
+      "formula": {
+        "implies": [
+          {"==": ["ai_generated_recommendation", true]},
+          {"==": ["has_algorithm_reference", true]}
+        ]
+      },
+      "variables": [
+        {"name": "ai_generated_recommendation", "type": "bool"},
+        {"name": "has_algorithm_reference", "type": "bool"}
+      ],
+      "error_message": "AI recommendation without algorithm transparency",
+      "citation": "HHS AI Framework 2024"
+    },
+    {
+      "id": "AI_VENDOR_BAA",
+      "category": "AI Governance",
+      "description": "AI vendors processing PHI must have Business Associate Agreement",
+      "formula_readable": "uses_external_ai → has_baa_mention",
+      "formula": {
+        "implies": [
+          {"==": ["uses_external_ai", true]},
+          {"==": ["has_baa_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "uses_external_ai", "type": "bool"},
+        {"name": "has_baa_mention", "type": "bool"}
+      ],
+      "error_message": "External AI vendor used without BAA reference",
+      "citation": "HIPAA §164.502(e)"
+    },
+    {
+      "id": "AI_RISK_ASSESSMENT",
+      "category": "AI Governance",
+      "description": "AI systems processing PHI require documented risk assessment",
+      "formula_readable": "uses_ai_system → has_risk_assessment_mention",
+      "formula": {
+        "implies": [
+          {"==": ["uses_ai_system", true]},
+          {"==": ["has_risk_assessment_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "uses_ai_system", "type": "bool"},
+        {"name": "has_risk_assessment_mention", "type": "bool"}
+      ],
+      "error_message": "AI system used without risk assessment documentation",
+      "citation": "2025 HIPAA Security Rule Proposed §164.308(a)(1)"
+    },
+    {
+      "id": "SECURITY_MFA_REQUIRED",
+      "category": "2025 Security Rule",
+      "description": "Multi-factor authentication required for PHI access",
+      "formula_readable": "accesses_phi → has_mfa_mention",
+      "formula": {
+        "implies": [
+          {"==": ["accesses_phi", true]},
+          {"==": ["has_mfa_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "accesses_phi", "type": "bool"},
+        {"name": "has_mfa_mention", "type": "bool"}
+      ],
+      "error_message": "PHI access without MFA authentication reference",
+      "citation": "2025 HIPAA Security Rule CPG-1"
+    },
+    {
+      "id": "SECURITY_ENCRYPTION_AT_REST",
+      "category": "2025 Security Rule",
+      "description": "PHI must be encrypted at rest per 2025 requirements",
+      "formula_readable": "stores_phi → has_encryption_at_rest",
+      "formula": {
+        "implies": [
+          {"==": ["stores_phi", true]},
+          {"==": ["has_encryption_at_rest", true]}
+        ]
+      },
+      "variables": [
+        {"name": "stores_phi", "type": "bool"},
+        {"name": "has_encryption_at_rest", "type": "bool"}
+      ],
+      "error_message": "PHI storage without encryption at rest",
+      "citation": "2025 HIPAA Security Rule §164.312(a)(2)(iv)"
+    },
+    {
+      "id": "SECURITY_ASSET_INVENTORY",
+      "category": "2025 Security Rule",
+      "description": "Systems with PHI must be in documented asset inventory",
+      "formula_readable": "has_phi → asset_inventoried",
+      "formula": {
+        "implies": [
+          {"==": ["has_phi", true]},
+          {"==": ["asset_inventoried", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_phi", "type": "bool"},
+        {"name": "asset_inventoried", "type": "bool"}
+      ],
+      "error_message": "PHI system not documented in asset inventory",
+      "citation": "2025 HIPAA Security Rule Proposed Updates"
+    },
+    {
+      "id": "SECURITY_VULN_SCAN",
+      "category": "2025 Security Rule",
+      "description": "Systems must reference vulnerability scanning compliance",
+      "formula_readable": "has_phi → vuln_scan_compliant",
+      "formula": {
+        "implies": [
+          {"==": ["has_phi", true]},
+          {"==": ["vuln_scan_compliant", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_phi", "type": "bool"},
+        {"name": "vuln_scan_compliant", "type": "bool"}
+      ],
+      "error_message": "Missing vulnerability scanning attestation",
+      "citation": "2025 HIPAA Security Rule - 6-month scan requirement"
+    },
+    {
+      "id": "SECURITY_72HR_RECOVERY",
+      "category": "2025 Security Rule",
+      "description": "Critical systems must have 72-hour recovery plan",
+      "formula_readable": "is_critical_system → has_recovery_plan",
+      "formula": {
+        "implies": [
+          {"==": ["is_critical_system", true]},
+          {"==": ["has_recovery_plan", true]}
+        ]
+      },
+      "variables": [
+        {"name": "is_critical_system", "type": "bool"},
+        {"name": "has_recovery_plan", "type": "bool"}
+      ],
+      "error_message": "Critical system without 72-hour recovery plan reference",
+      "citation": "2025 HIPAA Security Rule - Disaster Recovery"
+    },
+    {
+      "id": "SECURITY_NETWORK_MAP",
+      "category": "2025 Security Rule",
+      "description": "PHI data flows must be documented in network map",
+      "formula_readable": "has_phi_transmission → network_mapped",
+      "formula": {
+        "implies": [
+          {"==": ["has_phi_transmission", true]},
+          {"==": ["network_mapped", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_phi_transmission", "type": "bool"},
+        {"name": "network_mapped", "type": "bool"}
+      ],
+      "error_message": "PHI transmission not in documented network map",
+      "citation": "2025 HIPAA Security Rule Proposed Updates"
+    },
+    {
+      "id": "BAA_THIRD_PARTY",
+      "category": "Business Associate",
+      "description": "Third-party PHI access requires BAA",
+      "formula_readable": "third_party_access → has_baa_mention",
+      "formula": {
+        "implies": [
+          {"==": ["third_party_access", true]},
+          {"==": ["has_baa_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "third_party_access", "type": "bool"},
+        {"name": "has_baa_mention", "type": "bool"}
+      ],
+      "error_message": "Third-party PHI access without BAA",
+      "citation": "HIPAA §164.502(e)(1)"
+    },
+    {
+      "id": "BAA_SUBCONTRACTOR",
+      "category": "Business Associate",
+      "description": "Subcontractors with PHI access require BAA chain",
+      "formula_readable": "has_subcontractor → baa_chain_documented",
+      "formula": {
+        "implies": [
+          {"==": ["has_subcontractor", true]},
+          {"==": ["baa_chain_documented", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_subcontractor", "type": "bool"},
+        {"name": "baa_chain_documented", "type": "bool"}
+      ],
+      "error_message": "Subcontractor access without BAA chain documentation",
+      "citation": "HIPAA §164.504(e)(2)(ii)(D)"
+    },
+    {
+      "id": "BAA_CLOUD_PROVIDER",
+      "category": "Business Associate",
+      "description": "Cloud services storing PHI require BAA",
+      "formula_readable": "uses_cloud_storage → cloud_baa_confirmed",
+      "formula": {
+        "implies": [
+          {"==": ["uses_cloud_storage", true]},
+          {"==": ["cloud_baa_confirmed", true]}
+        ]
+      },
+      "variables": [
+        {"name": "uses_cloud_storage", "type": "bool"},
+        {"name": "cloud_baa_confirmed", "type": "bool"}
+      ],
+      "error_message": "Cloud PHI storage without BAA confirmation",
+      "citation": "OCR Cloud Computing Guidance"
+    },
+    {
+      "id": "INCIDENT_72HR_NOTIFICATION",
+      "category": "Incident Response",
+      "description": "Breaches affecting 500+ individuals require 72-hour notification",
+      "formula_readable": "large_breach → notification_initiated",
+      "formula": {
+        "implies": [
+          {"==": ["large_breach", true]},
+          {"==": ["notification_initiated", true]}
+        ]
+      },
+      "variables": [
+        {"name": "large_breach", "type": "bool"},
+        {"name": "notification_initiated", "type": "bool"}
+      ],
+      "error_message": "Large breach without 72-hour notification mention",
+      "citation": "HIPAA §164.408"
+    },
+    {
+      "id": "INCIDENT_DOCUMENTATION",
+      "category": "Incident Response",
+      "description": "Security incidents must be documented",
+      "formula_readable": "has_security_incident → incident_documented",
+      "formula": {
+        "implies": [
+          {"==": ["has_security_incident", true]},
+          {"==": ["incident_documented", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_security_incident", "type": "bool"},
+        {"name": "incident_documented", "type": "bool"}
+      ],
+      "error_message": "Security incident without documentation",
+      "citation": "HIPAA §164.308(a)(6)(ii)"
+    },
+    {
+      "id": "PATIENT_RIGHT_ACCESS",
+      "category": "Patient Rights",
+      "description": "Patients have right to access their PHI",
+      "formula_readable": "patient_access_request → access_provided",
+      "formula": {
+        "implies": [
+          {"==": ["patient_access_request", true]},
+          {"==": ["access_provided", true]}
+        ]
+      },
+      "variables": [
+        {"name": "patient_access_request", "type": "bool"},
+        {"name": "access_provided", "type": "bool"}
+      ],
+      "error_message": "Patient access request without confirmation of access",
+      "citation": "HIPAA §164.524"
+    },
+    {
+      "id": "PATIENT_RIGHT_AMENDMENT",
+      "category": "Patient Rights",
+      "description": "Patient amendment requests must be addressed",
+      "formula_readable": "patient_amendment_request → amendment_addressed",
+      "formula": {
+        "implies": [
+          {"==": ["patient_amendment_request", true]},
+          {"==": ["amendment_addressed", true]}
+        ]
+      },
+      "variables": [
+        {"name": "patient_amendment_request", "type": "bool"},
+        {"name": "amendment_addressed", "type": "bool"}
+      ],
+      "error_message": "Patient amendment request not addressed",
+      "citation": "HIPAA §164.526"
+    },
+    {
+      "id": "TELEHEALTH_ENCRYPTION",
+      "category": "Telehealth",
+      "description": "Telehealth sessions must use encrypted communications",
+      "formula_readable": "is_telehealth → has_encryption_mention",
+      "formula": {
+        "implies": [
+          {"==": ["is_telehealth", true]},
+          {"==": ["has_encryption_mention", true]}
+        ]
+      },
+      "variables": [
+        {"name": "is_telehealth", "type": "bool"},
+        {"name": "has_encryption_mention", "type": "bool"}
+      ],
+      "error_message": "Telehealth session without encryption confirmation",
+      "citation": "OCR Telehealth Guidance"
+    },
+    {
+      "id": "TELEHEALTH_PLATFORM_APPROVED",
+      "category": "Telehealth",
+      "description": "Telehealth platforms must be HIPAA-compliant",
+      "formula_readable": "is_telehealth → platform_hipaa_compliant",
+      "formula": {
+        "implies": [
+          {"==": ["is_telehealth", true]},
+          {"==": ["platform_hipaa_compliant", true]}
+        ]
+      },
+      "variables": [
+        {"name": "is_telehealth", "type": "bool"},
+        {"name": "platform_hipaa_compliant", "type": "bool"}
+      ],
+      "error_message": "Telehealth on non-approved platform",
+      "citation": "OCR Telehealth HIPAA Flexibilities"
+    },
+    {
+      "id": "MENTAL_HEALTH_PSYCHOTHERAPY",
+      "category": "Special Protections",
+      "description": "Psychotherapy notes require separate authorization",
+      "formula_readable": "has_psychotherapy_notes → has_special_authorization",
+      "formula": {
+        "implies": [
+          {"==": ["has_psychotherapy_notes", true]},
+          {"==": ["has_special_authorization", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_psychotherapy_notes", "type": "bool"},
+        {"name": "has_special_authorization", "type": "bool"}
+      ],
+      "error_message": "Psychotherapy notes disclosed without special authorization",
+      "citation": "HIPAA §164.508(a)(2)"
+    },
+    {
+      "id": "SUBSTANCE_ABUSE_42CFR",
+      "category": "Special Protections",
+      "description": "Substance abuse records require 42 CFR Part 2 compliance",
+      "formula_readable": "has_substance_abuse_record → has_42cfr_compliance",
+      "formula": {
+        "implies": [
+          {"==": ["has_substance_abuse_record", true]},
+          {"==": ["has_42cfr_compliance", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_substance_abuse_record", "type": "bool"},
+        {"name": "has_42cfr_compliance", "type": "bool"}
+      ],
+      "error_message": "Substance abuse record without 42 CFR Part 2 compliance",
+      "citation": "42 CFR Part 2"
+    },
+    {
+      "id": "GENETIC_GINA_COMPLIANCE",
+      "category": "Special Protections",
+      "description": "Genetic information requires GINA compliance",
+      "formula_readable": "has_genetic_info → gina_compliant",
+      "formula": {
+        "implies": [
+          {"==": ["has_genetic_info", true]},
+          {"==": ["gina_compliant", true]}
+        ]
+      },
+      "variables": [
+        {"name": "has_genetic_info", "type": "bool"},
+        {"name": "gina_compliant", "type": "bool"}
+      ],
+      "error_message": "Genetic information disclosed without GINA compliance",
+      "citation": "GINA §§201-213"
+    },
+    {
+      "id": "RESEARCH_IRB_APPROVAL",
+      "category": "Research",
+      "description": "PHI used for research requires IRB approval or waiver",
+      "formula_readable": "uses_phi_for_research → has_irb_approval",
+      "formula": {
+        "implies": [
+          {"==": ["uses_phi_for_research", true]},
+          {"==": ["has_irb_approval", true]}
+        ]
+      },
+      "variables": [
+        {"name": "uses_phi_for_research", "type": "bool"},
+        {"name": "has_irb_approval", "type": "bool"}
+      ],
+      "error_message": "Research use of PHI without IRB approval reference",
+      "citation": "HIPAA §164.512(i)"
+    },
+    {
+      "id": "RESEARCH_LIMITED_DATA_SET",
+      "category": "Research",
+      "description": "Limited data sets require data use agreement",
+      "formula_readable": "uses_limited_data_set → has_data_use_agreement",
+      "formula": {
+        "implies": [
+          {"==": ["uses_limited_data_set", true]},
+          {"==": ["has_data_use_agreement", true]}
+        ]
+      },
+      "variables": [
+        {"name": "uses_limited_data_set", "type": "bool"},
+        {"name": "has_data_use_agreement", "type": "bool"}
+      ],
+      "error_message": "Limited data set without data use agreement",
+      "citation": "HIPAA §164.514(e)"
     }
   ],
   "extractors": {
@@ -1089,6 +1561,236 @@
     "violation_count": {
       "type": "computed",
       "default": 0
+    },
+    "mentions_ai_training": {
+      "type": "boolean",
+      "keywords": ["training data", "model training", "machine learning", "ai training", "ml training", "train the model", "training set"],
+      "default": false
+    },
+    "has_consent_mention": {
+      "type": "boolean",
+      "keywords": ["consent", "authorized", "patient agreed", "permission granted", "opted in", "consented"],
+      "default": false
+    },
+    "ai_generated_recommendation": {
+      "type": "boolean",
+      "keywords": ["ai recommends", "model suggests", "algorithm indicates", "ai-generated", "machine learning", "model output", "ai assistant", "llm", "gpt", "claude"],
+      "default": false
+    },
+    "has_limitation_disclosure": {
+      "type": "boolean",
+      "keywords": ["limitations", "not a substitute", "consult physician", "professional judgment", "may not be accurate", "verify with", "clinical judgment required"],
+      "default": false
+    },
+    "ai_clinical_decision": {
+      "type": "boolean",
+      "keywords": ["ai diagnosis", "model recommends treatment", "algorithm suggests", "ai clinical", "clinical decision support"],
+      "default": false
+    },
+    "has_human_review_mention": {
+      "type": "boolean",
+      "keywords": ["reviewed by", "physician reviewed", "clinician approved", "human review", "verified by doctor", "provider confirmed"],
+      "default": false
+    },
+    "has_algorithm_reference": {
+      "type": "boolean",
+      "keywords": ["algorithm version", "model version", "v1.", "v2.", "version:", "model:", "algorithm:", "trained on"],
+      "default": false
+    },
+    "uses_external_ai": {
+      "type": "boolean",
+      "keywords": ["openai", "anthropic", "google ai", "azure ai", "aws bedrock", "third-party ai", "external ai", "chatgpt", "claude", "gemini"],
+      "default": false
+    },
+    "has_baa_mention": {
+      "type": "boolean",
+      "keywords": ["baa", "business associate agreement", "business associate", "covered under baa", "baa signed", "hipaa agreement"],
+      "default": false
+    },
+    "uses_ai_system": {
+      "type": "boolean",
+      "keywords": ["ai system", "artificial intelligence", "machine learning", "ml model", "neural network", "deep learning", "nlp", "llm"],
+      "default": false
+    },
+    "has_risk_assessment_mention": {
+      "type": "boolean",
+      "keywords": ["risk assessment", "risk analysis", "security assessment", "privacy impact", "risk evaluated", "assessed risk"],
+      "default": false
+    },
+    "accesses_phi": {
+      "type": "boolean",
+      "keywords": ["accessing patient", "patient record", "medical record", "phi access", "health information"],
+      "default": false
+    },
+    "has_mfa_mention": {
+      "type": "boolean",
+      "keywords": ["mfa", "multi-factor", "two-factor", "2fa", "multifactor", "authentication verified", "identity verified"],
+      "default": false
+    },
+    "stores_phi": {
+      "type": "boolean",
+      "keywords": ["stored in", "database", "repository", "data store", "persisted", "saved to", "archived"],
+      "default": false
+    },
+    "has_encryption_at_rest": {
+      "type": "boolean",
+      "keywords": ["encrypted at rest", "aes-256", "encryption at rest", "encrypted storage", "encrypted database"],
+      "default": false
+    },
+    "asset_inventoried": {
+      "type": "boolean",
+      "keywords": ["asset inventory", "asset id", "system inventory", "inventoried", "asset management"],
+      "default": true
+    },
+    "vuln_scan_compliant": {
+      "type": "boolean",
+      "keywords": ["vulnerability scan", "security scan", "penetration test", "pentest", "vuln scan", "security tested"],
+      "default": true
+    },
+    "is_critical_system": {
+      "type": "boolean",
+      "keywords": ["critical system", "production", "ehr", "emr", "clinical system", "mission critical"],
+      "default": false
+    },
+    "has_recovery_plan": {
+      "type": "boolean",
+      "keywords": ["disaster recovery", "recovery plan", "backup plan", "business continuity", "rto:", "rpo:"],
+      "default": true
+    },
+    "has_phi_transmission": {
+      "type": "boolean",
+      "keywords": ["transmitted", "sent to", "transferred", "shared with", "transmitted via", "sent via"],
+      "default": false
+    },
+    "network_mapped": {
+      "type": "boolean",
+      "keywords": ["network diagram", "data flow", "network map", "architecture diagram", "documented flow"],
+      "default": true
+    },
+    "third_party_access": {
+      "type": "boolean",
+      "keywords": ["third party", "third-party", "vendor", "contractor", "external partner", "outside organization"],
+      "default": false
+    },
+    "has_subcontractor": {
+      "type": "boolean",
+      "keywords": ["subcontractor", "sub-contractor", "downstream vendor", "subprocessor"],
+      "default": false
+    },
+    "baa_chain_documented": {
+      "type": "boolean",
+      "keywords": ["baa chain", "downstream baa", "subcontractor baa", "baa in place"],
+      "default": true
+    },
+    "uses_cloud_storage": {
+      "type": "boolean",
+      "keywords": ["aws", "azure", "gcp", "cloud storage", "s3", "blob storage", "cloud-based"],
+      "default": false
+    },
+    "cloud_baa_confirmed": {
+      "type": "boolean",
+      "keywords": ["aws baa", "azure baa", "gcp baa", "cloud baa", "hipaa eligible", "hipaa compliant cloud"],
+      "default": true
+    },
+    "large_breach": {
+      "type": "boolean",
+      "keywords": ["500 or more", "large breach", "major breach", "significant breach", "mass exposure"],
+      "default": false
+    },
+    "notification_initiated": {
+      "type": "boolean",
+      "keywords": ["notification sent", "notified hhs", "breach notification", "reported to ocr"],
+      "default": true
+    },
+    "has_security_incident": {
+      "type": "boolean",
+      "keywords": ["security incident", "breach detected", "unauthorized access", "data breach", "incident report"],
+      "default": false
+    },
+    "incident_documented": {
+      "type": "boolean",
+      "keywords": ["incident report", "documented incident", "incident log", "security log"],
+      "default": true
+    },
+    "patient_access_request": {
+      "type": "boolean",
+      "keywords": ["access request", "request for records", "patient requests", "right to access"],
+      "default": false
+    },
+    "access_provided": {
+      "type": "boolean",
+      "keywords": ["access granted", "records provided", "information sent", "access fulfilled"],
+      "default": true
+    },
+    "patient_amendment_request": {
+      "type": "boolean",
+      "keywords": ["amendment request", "request to amend", "correction request", "update request"],
+      "default": false
+    },
+    "amendment_addressed": {
+      "type": "boolean",
+      "keywords": ["amendment processed", "correction made", "amendment denied", "amendment addressed"],
+      "default": true
+    },
+    "is_telehealth": {
+      "type": "boolean",
+      "keywords": ["telehealth", "telemedicine", "virtual visit", "video visit", "remote consultation", "televisit"],
+      "default": false
+    },
+    "platform_hipaa_compliant": {
+      "type": "boolean",
+      "keywords": ["hipaa compliant platform", "approved platform", "zoom for healthcare", "doxy.me", "teladoc"],
+      "default": true
+    },
+    "has_psychotherapy_notes": {
+      "type": "boolean",
+      "keywords": ["psychotherapy notes", "therapy notes", "counseling notes", "mental health notes", "psychiatric notes"],
+      "default": false
+    },
+    "has_special_authorization": {
+      "type": "boolean",
+      "keywords": ["special authorization", "separate consent", "specific authorization", "written authorization"],
+      "default": true
+    },
+    "has_substance_abuse_record": {
+      "type": "boolean",
+      "keywords": ["substance abuse", "addiction treatment", "drug treatment", "alcohol treatment", "rehab", "detox"],
+      "default": false
+    },
+    "has_42cfr_compliance": {
+      "type": "boolean",
+      "keywords": ["42 cfr", "part 2", "substance abuse consent", "sud consent", "addiction consent"],
+      "default": true
+    },
+    "has_genetic_info": {
+      "type": "boolean",
+      "keywords": ["genetic", "dna", "genome", "genetic test", "brca", "hereditary", "gene mutation"],
+      "default": false
+    },
+    "gina_compliant": {
+      "type": "boolean",
+      "keywords": ["gina", "genetic nondiscrimination", "genetic privacy", "genetic consent"],
+      "default": true
+    },
+    "uses_phi_for_research": {
+      "type": "boolean",
+      "keywords": ["research study", "clinical trial", "research protocol", "research use", "research purposes"],
+      "default": false
+    },
+    "has_irb_approval": {
+      "type": "boolean",
+      "keywords": ["irb approved", "irb approval", "ethics approved", "irb waiver", "institutional review"],
+      "default": true
+    },
+    "uses_limited_data_set": {
+      "type": "boolean",
+      "keywords": ["limited data set", "lds", "partially de-identified"],
+      "default": false
+    },
+    "has_data_use_agreement": {
+      "type": "boolean",
+      "keywords": ["data use agreement", "dua", "data sharing agreement"],
+      "default": true
     }
   }
 }

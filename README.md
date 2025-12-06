@@ -20,6 +20,8 @@ This is the core library used by all cloud deployments:
 
 **Documentation**: [Rule Authoring Guide](docs/RULE_AUTHORING_GUIDE.md) | [Web Docs](https://aare.ai/docs.html)
 
+**Performance benchmarks**: [Benchmarks](BENCHMARKS.md) | [Web](https://aare.ai/benchmarks.html)
+
 ## Installation
 
 ```bash
@@ -524,21 +526,22 @@ if verification["verified"]:
 
 ## Performance
 
-aare-core is optimized for high-throughput verification. Benchmarks on a standard laptop:
+aare-core is optimized for high-throughput verification. Benchmarks on Apple M4:
 
 | Test | Throughput | p99 Latency |
 |------|-----------|-------------|
-| Single-threaded | ~320 req/s | 4 ms |
-| Multi-process (4 workers) | ~1,600 req/s | 3 ms |
-| Complex ontology (50+ constraints) | ~40 req/s | 30 ms |
+| Single-threaded | 312.9 req/s | 6.91 ms |
+| HIPAA ontology (76 constraints) | 31.2 req/s | 32.89 ms |
 
 Run the stress test yourself:
 
 ```bash
-python tests/stress_test.py --requests 5000 --workers 4
+python tests/stress_test.py --requests 100 --hipaa-requests 500
 ```
 
 The multi-process mode achieves near-linear scaling. Z3 is not thread-safe, so we use separate processes for concurrent workloads.
+
+**Full benchmarks**: [BENCHMARKS.md](BENCHMARKS.md)
 
 ## Running Tests
 
